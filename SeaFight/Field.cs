@@ -14,6 +14,8 @@ namespace SeaFight
 
     public enum Status { Empty, Miss, Hit, Ship, Ghost, Buffer}; // пустая, промах, попадание, корабль, временный корабль, буферная зона
 
+    public enum Step { Prepare, Run, Wait, Stop };
+
 
     public partial class Field: UserControl
     {
@@ -23,6 +25,10 @@ namespace SeaFight
         const float INNER_LINE_RATIO = 0.02f; // отношение ширины контрола к толщине внутренней линии
         const float BORDER_LINE_RATIO = 0.1f; // отношение ширины контрола к толщине внешней линии
         const string ALPHABET = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЭЮЯ";
+        readonly Color W_COLOR = Color.Red; // красный цвет светофора
+        readonly Color P_COLOR = Color.Yellow; // желтый цвет светофора
+        readonly Color R_COLOR = Color.Green; // зеленый цвет светофора
+        readonly Color S_COLOR = Color.Black; // черный цвет светофора
 
         #endregion // Constants
 
@@ -54,6 +60,7 @@ namespace SeaFight
         Color missColor; // цвет промаха
         Color hitColor; // цвет попадания
         Color cursorColor; // цвет обводки последней ячейки
+        Color lights; // цвет светофора
 
         string[] namesX; // наименования по оси абцисс
         string[] namesY; // наименования по оси ординат
@@ -393,6 +400,8 @@ namespace SeaFight
             //bool result = GenerateShips();
 
             currentShipIndex = 0;
+
+            lights = BackColor;
         }
 
 
@@ -454,6 +463,9 @@ namespace SeaFight
                     }
                 }
             }
+
+            // отрисовка нулевой ячейки-светофора
+            g.FillRectangle(new SolidBrush(lights), linesX[0], linesY[0], cellWidth, cellHeight);
 
             // отрисовка вертикальных линий
             for (int i = 0; i <= nWidth + 1; i++)
@@ -1160,6 +1172,31 @@ namespace SeaFight
         }
 
 
+        public void SetLights(Step step)
+        {
+            switch (step)
+            {
+                case Step.Prepare:
+                    lights = P_COLOR;
+                    break;
+                case Step.Run:
+                    lights = R_COLOR;
+                    break;
+                case Step.Wait:
+                    lights = W_COLOR;
+                    break;
+                case Step.Stop:
+                    lights = S_COLOR;
+                    break;
+                default:
+                    lights = BackColor;
+                    break;
+            }
+
+            Invalidate();
+        }
+
+
         public void ClearState()
         {
             ClearField(cells);
@@ -1171,6 +1208,10 @@ namespace SeaFight
             shipsInstalled = false;
             shipsDestroyed = false;
             shipsChecked = false;
+
+            activeCell = new Point();
+
+            lights = BackColor;
         }
     }
 }
