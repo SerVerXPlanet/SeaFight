@@ -12,7 +12,7 @@ namespace SeaFight
 {
     public enum Mode { View, Battle, Build, Check};
 
-    public enum Status { Empty, Miss, Hit, Ship, Ghost, Buffer}; // пустая, промах, попадание, корабль, временный корабль, буферная зона
+    public enum Status { Empty, Miss, Hit, Ship, Ghost, Buffer, ShipOff, BufferOff }; // пустая, промах, попадание, корабль, временный корабль, буферная зона, запретная зона по кораблю, запретная зона по буферу
 
     public enum Step { Prepare, Run, Wait, Stop };
 
@@ -460,6 +460,11 @@ namespace SeaFight
                         case Status.Ghost:
                             g.FillRectangle(new SolidBrush(bufferColor), linesX[i], linesY[j], cellWidth, cellHeight);
                             break;
+
+                        case Status.ShipOff:
+                        case Status.BufferOff:
+                            g.FillRectangle(new SolidBrush(hitColor), linesX[i], linesY[j], cellWidth, cellHeight);
+                            break;
                     }
                 }
             }
@@ -570,8 +575,18 @@ namespace SeaFight
                 {
                     for (int j = 1; j <= nHeight; j++)
                     {
-                        if (cells[i, j] == Status.Ghost)
-                            cells[i, j] = Status.Empty;
+                        switch (cells[i, j])
+                        {
+                            case Status.Ghost:
+                                cells[i, j] = Status.Empty;
+                                break;
+                            case Status.ShipOff:
+                                cells[i, j] = Status.Ship;
+                                break;
+                            case Status.BufferOff:
+                                cells[i, j] = Status.Buffer;
+                                break;
+                        }
                     }
                 }
 
@@ -1003,18 +1018,58 @@ namespace SeaFight
 
             for (int i = 1; i <= nWidth; i++)
             {
-                if (cells[i, tempPos.Y] != Status.Ship && cells[i, tempPos.Y] != Status.Buffer)
-                    cells[i, tempPos.Y] = Status.Empty;
-                if (cells[i, currentCell.Y] != Status.Ship && cells[i, currentCell.Y] != Status.Buffer)
-                    cells[i, currentCell.Y] = Status.Empty;
+                switch (cells[i, tempPos.Y])
+                {
+                    case Status.Ghost:
+                        cells[i, tempPos.Y] = Status.Empty;
+                        break;
+                    case Status.ShipOff:
+                        cells[i, tempPos.Y] = Status.Ship;
+                        break;
+                    case Status.BufferOff:
+                        cells[i, tempPos.Y] = Status.Buffer;
+                        break;
+                }
+                switch (cells[i, currentCell.Y])
+                {
+                    case Status.Ghost:
+                        cells[i, currentCell.Y] = Status.Empty;
+                        break;
+                    case Status.ShipOff:
+                        cells[i, currentCell.Y] = Status.Ship;
+                        break;
+                    case Status.BufferOff:
+                        cells[i, currentCell.Y] = Status.Buffer;
+                        break;
+                }
             }
 
             for (int j = 1; j <= nHeight; j++)
             {
-                if (cells[tempPos.X, j] != Status.Ship && cells[tempPos.X, j] != Status.Buffer)
-                    cells[tempPos.X, j] = Status.Empty;
-                if (cells[currentCell.X, j] != Status.Ship && cells[currentCell.X, j] != Status.Buffer)
-                    cells[currentCell.X, j] = Status.Empty;
+                switch (cells[tempPos.X, j])
+                {
+                    case Status.Ghost:
+                        cells[tempPos.X, j] = Status.Empty;
+                        break;
+                    case Status.ShipOff:
+                        cells[tempPos.X, j] = Status.Ship;
+                        break;
+                    case Status.BufferOff:
+                        cells[tempPos.X, j] = Status.Buffer;
+                        break;
+                }
+                switch (cells[currentCell.X, j])
+                {
+                    case Status.Ghost:
+                        cells[currentCell.X, j] = Status.Empty;
+                        break;
+                    case Status.ShipOff:
+                        cells[currentCell.X, j] = Status.Ship;
+                        break;
+                    case Status.BufferOff:
+                        cells[currentCell.X, j] = Status.Buffer;
+                        break;
+                }
             }
 
             int start = shipPositionVector.X;
@@ -1025,15 +1080,35 @@ namespace SeaFight
                 case true: // фигура по горизонтали
                     for (int i = start; i <= end; i++)
                     {
-                        if (cells[i, currentCell.Y] != Status.Ship && cells[i, currentCell.Y] != Status.Buffer)
-                            cells[i, currentCell.Y] = Status.Ghost;
+                        switch(cells[i, currentCell.Y])
+                        {
+                            case Status.Ship:
+                                cells[i, currentCell.Y] = Status.ShipOff;
+                                break;
+                            case Status.Buffer:
+                                cells[i, currentCell.Y] = Status.BufferOff;
+                                break;
+                            default:
+                                cells[i, currentCell.Y] = Status.Ghost;
+                                break;
+                        }
                     }
                     break;
                 case false: // фигура по вертикали
                     for (int j = start; j <= end; j++)
                     {
-                        if (cells[currentCell.X, j] != Status.Ship && cells[currentCell.X, j] != Status.Buffer)
-                            cells[currentCell.X, j] = Status.Ghost;
+                        switch (cells[currentCell.X, j])
+                        {
+                            case Status.Ship:
+                                cells[currentCell.X, j] = Status.ShipOff;
+                                break;
+                            case Status.Buffer:
+                                cells[currentCell.X, j] = Status.BufferOff;
+                                break;
+                            default:
+                                cells[currentCell.X, j] = Status.Ghost;
+                                break;
+                        }
                     }
                     break;
             }
@@ -1047,7 +1122,7 @@ namespace SeaFight
             // проверка на возможность установки корабля
             foreach (Point p in shipCoords)
             {
-                if (cells[p.X, p.Y] == Status.Ship || cells[p.X, p.Y] == Status.Buffer)
+                if (cells[p.X, p.Y] == Status.ShipOff || cells[p.X, p.Y] == Status.BufferOff)
                 {
                     isPossible = false;
                     break;
