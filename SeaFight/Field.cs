@@ -539,7 +539,7 @@ namespace SeaFight
 
         private void Field_MouseMove(object sender, MouseEventArgs e)
         {
-            if (mode == Mode.Build && currentShipIndex != -1)
+            if (mode == Mode.Build && ships.Count > 0)
             {
                 Point currentCell = GetCurrentCell(e.X, e.Y);
 
@@ -580,11 +580,11 @@ namespace SeaFight
                             case Status.Ghost:
                                 cells[i, j] = Status.Empty;
                                 break;
-                            case Status.ShipOff:
-                                cells[i, j] = Status.Ship;
-                                break;
                             case Status.BufferOff:
                                 cells[i, j] = Status.Buffer;
+                                break;
+                            case Status.ShipOff:
+                                cells[i, j] = Status.Ship;
                                 break;
                         }
                     }
@@ -716,17 +716,7 @@ namespace SeaFight
                         {
                             cells[currentCell.X, currentCell.Y] = Status.Hit;
 
-                            bool fullShip = true;
-
-                            bool left = CheckShip(currentCell, true, -1);
-                            bool right = CheckShip(currentCell, true, 1);
-                            bool top = CheckShip(currentCell, false, -1);
-                            bool bottom = CheckShip(currentCell, false, 1);
-
-                            if (!(left && right && top && bottom))
-                                fullShip = false;
-
-                            if (fullShip)
+                            if (IsShipDestroyed(currentCell))
                             {
                                 //Debug.WriteLine("FULL");
                                 SetBufferZone(cells, GetHitCoords(currentCell));
@@ -757,17 +747,7 @@ namespace SeaFight
                     {
                         cells[currentCell.X, currentCell.Y] = Status.Hit;
 
-                        bool fullShip = true;
-
-                        bool left = CheckShip(currentCell, true, -1, true);
-                        bool right = CheckShip(currentCell, true, 1, true);
-                        bool top = CheckShip(currentCell, false, -1, true);
-                        bool bottom = CheckShip(currentCell, false, 1, true);
-
-                        if (!(left && right && top && bottom))
-                            fullShip = false;
-
-                        if (fullShip)
+                        if (IsShipDestroyed(currentCell, true))
                         {
                             //Debug.WriteLine("FULL");
                             SetBufferZone(cells, GetHitCoords(currentCell));
@@ -801,10 +781,10 @@ namespace SeaFight
                     }
                     else if (mouseButtons == MouseButtons.Left)
                     {
-                        currentShipIndex = SetShip(cells, shipCoords, ships, currentShipIndex, currentCell);
+                        _ = SetShip(cells, shipCoords, ships, ref currentShipIndex, currentCell);
                     }
 
-                    shipsInstalled = currentShipIndex == -1;
+                    shipsInstalled = ships.Count == 0;
 
                     if (shipsInstalled)
                     {
@@ -818,6 +798,22 @@ namespace SeaFight
             Invalidate();
 
             return true;
+        }
+
+
+        public bool IsShipDestroyed(Point currentCell, bool shipsOnly = false)
+        {
+            bool fullShip = true;
+
+            bool left = CheckShip(currentCell, true, -1, shipsOnly);
+            bool right = CheckShip(currentCell, true, 1, shipsOnly);
+            bool top = CheckShip(currentCell, false, -1, shipsOnly);
+            bool bottom = CheckShip(currentCell, false, 1, shipsOnly);
+
+            if (!(left && right && top && bottom))
+                fullShip = false;
+
+            return fullShip;
         }
 
 
@@ -1023,11 +1019,11 @@ namespace SeaFight
                     case Status.Ghost:
                         cells[i, tempPos.Y] = Status.Empty;
                         break;
-                    case Status.ShipOff:
-                        cells[i, tempPos.Y] = Status.Ship;
-                        break;
                     case Status.BufferOff:
                         cells[i, tempPos.Y] = Status.Buffer;
+                        break;
+                    case Status.ShipOff:
+                        cells[i, tempPos.Y] = Status.Ship;
                         break;
                 }
                 switch (cells[i, currentCell.Y])
@@ -1035,11 +1031,11 @@ namespace SeaFight
                     case Status.Ghost:
                         cells[i, currentCell.Y] = Status.Empty;
                         break;
-                    case Status.ShipOff:
-                        cells[i, currentCell.Y] = Status.Ship;
-                        break;
                     case Status.BufferOff:
                         cells[i, currentCell.Y] = Status.Buffer;
+                        break;
+                    case Status.ShipOff:
+                        cells[i, currentCell.Y] = Status.Ship;
                         break;
                 }
             }
@@ -1051,11 +1047,11 @@ namespace SeaFight
                     case Status.Ghost:
                         cells[tempPos.X, j] = Status.Empty;
                         break;
-                    case Status.ShipOff:
-                        cells[tempPos.X, j] = Status.Ship;
-                        break;
                     case Status.BufferOff:
                         cells[tempPos.X, j] = Status.Buffer;
+                        break;
+                    case Status.ShipOff:
+                        cells[tempPos.X, j] = Status.Ship;
                         break;
                 }
                 switch (cells[currentCell.X, j])
@@ -1063,11 +1059,11 @@ namespace SeaFight
                     case Status.Ghost:
                         cells[currentCell.X, j] = Status.Empty;
                         break;
-                    case Status.ShipOff:
-                        cells[currentCell.X, j] = Status.Ship;
-                        break;
                     case Status.BufferOff:
                         cells[currentCell.X, j] = Status.Buffer;
+                        break;
+                    case Status.ShipOff:
+                        cells[currentCell.X, j] = Status.Ship;
                         break;
                 }
             }
@@ -1082,11 +1078,11 @@ namespace SeaFight
                     {
                         switch(cells[i, currentCell.Y])
                         {
-                            case Status.Ship:
-                                cells[i, currentCell.Y] = Status.ShipOff;
-                                break;
                             case Status.Buffer:
                                 cells[i, currentCell.Y] = Status.BufferOff;
+                                break;
+                            case Status.Ship:
+                                cells[i, currentCell.Y] = Status.ShipOff;
                                 break;
                             default:
                                 cells[i, currentCell.Y] = Status.Ghost;
@@ -1099,11 +1095,11 @@ namespace SeaFight
                     {
                         switch (cells[currentCell.X, j])
                         {
-                            case Status.Ship:
-                                cells[currentCell.X, j] = Status.ShipOff;
-                                break;
                             case Status.Buffer:
                                 cells[currentCell.X, j] = Status.BufferOff;
+                                break;
+                            case Status.Ship:
+                                cells[currentCell.X, j] = Status.ShipOff;
                                 break;
                             default:
                                 cells[currentCell.X, j] = Status.Ghost;
@@ -1115,14 +1111,14 @@ namespace SeaFight
         }
 
 
-        int SetShip(Status[,] cells, Point[] shipCoords, List<int> ships, int currentShipIndex, Point currentCell)
+        bool SetShip(Status[,] cells, Point[] shipCoords, List<int> ships, ref int currentShipIndex, Point currentCell)
         {
             bool isPossible = true;
 
             // проверка на возможность установки корабля
             foreach (Point p in shipCoords)
             {
-                if (cells[p.X, p.Y] == Status.ShipOff || cells[p.X, p.Y] == Status.BufferOff)
+                if (cells[p.X, p.Y] == Status.Buffer || cells[p.X, p.Y] == Status.Ship || cells[p.X, p.Y] == Status.BufferOff || cells[p.X, p.Y] == Status.ShipOff)
                 {
                     isPossible = false;
                     break;
@@ -1131,29 +1127,33 @@ namespace SeaFight
 
             if (isPossible)
             {
-                for (int i = 1; i <= nWidth; i++)
-                {
-                    if (cells[i, currentCell.Y] == Status.Ghost)
-                        cells[i, currentCell.Y] = Status.Ship;
-                }
+                //for (int i = 1; i <= nWidth; i++)
+                //{
+                //    if (cells[i, currentCell.Y] == Status.Ghost)
+                //        cells[i, currentCell.Y] = Status.Ship;
+                //}
 
-                for (int j = 1; j <= nHeight; j++)
+                //for (int j = 1; j <= nHeight; j++)
+                //{
+                //    if (cells[currentCell.X, j] == Status.Ghost)
+                //        cells[currentCell.X, j] = Status.Ship;
+                //}
+                foreach (Point p in shipCoords)
                 {
-                    if (cells[currentCell.X, j] == Status.Ghost)
-                        cells[currentCell.X, j] = Status.Ship;
+                    cells[p.X, p.Y] = Status.Ship;
                 }
 
                 myShips.Add(new Ship(ships[currentShipIndex], orientation, shipCoords));
 
-                if (ships.Count > 0)
-                    ships.RemoveAt(currentShipIndex);
+                ships.RemoveAt(currentShipIndex);
 
-                currentShipIndex = ships.Count > 0 ? ((ships.Count + currentShipIndex) % ships.Count) : -1;
+                if(ships.Count > 0 && currentShipIndex == ships.Count)
+                    currentShipIndex--;
 
                 SetBufferZone(cells, shipCoords);
             }
 
-            return currentShipIndex;
+            return isPossible;
         }
 
 
@@ -1178,34 +1178,50 @@ namespace SeaFight
 
             tempPos = new Point(0, 0);
 
+            bool setSuccess;
+
             Random rnd = new Random();
 
-            List<int> enemyShips = ships.ToArray().ToList<int>();
+            List<int> enemyShips = new List<int>(ships);
             enemyShips.OrderByDescending(n => n);
             //enemyShips = (new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }).ToList<int>();
             //enemyShips = Enumerable.Repeat(1, 20).ToList<int>();
+
             int enemyIndex = 0;
 
             int iterationsCount = 10 * nWidth * nHeight; // на случай большого кол-ва кораблей
 
-            while(enemyIndex != -1 && iterationsCount != 0)
+            while(enemyShips.Count > 0 && iterationsCount != 0)
             {
                 Point currentCell = new Point(rnd.Next(1, nWidth + 1), rnd.Next(1, nHeight + 1));
-                bool orientation = Convert.ToBoolean(rnd.Next(0, 2));
+                orientation = Convert.ToBoolean(rnd.Next(0, 2));
 
-                int enemyShip = enemyShips[enemyIndex];
-                Point shipPositionVector = GetShipPositionVector(enemyShip, currentCell, orientation);
-                Point[] tempShip = GetShipCoords(enemyShip, shipPositionVector, currentCell, orientation);
-                CreateTempShip(enemies, shipPositionVector, currentCell, orientation);
+                int enemyShipLen = enemyShips[enemyIndex];
+                Point shipPositionVector = GetShipPositionVector(enemyShipLen, currentCell, orientation);
+                Point[] tempShip = GetShipCoords(enemyShipLen, shipPositionVector, currentCell, orientation);
 
-                itsShips.Add(new Ship(enemyShips[enemyIndex], orientation, tempShip));
+                setSuccess = true;
 
-                enemyIndex = SetShip(enemies, tempShip, enemyShips, enemyIndex, currentCell);
+                foreach (var p in tempShip)
+                {
+                    if (enemies[p.X, p.Y] == Status.Buffer || enemies[p.X, p.Y] == Status.Ship || enemies[p.X, p.Y] == Status.BufferOff || enemies[p.X, p.Y] == Status.ShipOff)
+                    {
+                        setSuccess = false;
+                        break;
+                    }
+                }
+
+                if (setSuccess)
+                {
+                    CreateTempShip(enemies, shipPositionVector, currentCell, orientation);
+                    _ = SetShip(enemies, tempShip, enemyShips, ref enemyIndex, currentCell);
+                    itsShips.Add(new Ship(enemyShipLen, orientation, tempShip));
+                }
 
                 iterationsCount--;
             }
 
-            if(enemyIndex != -1)
+            if(enemyShips.Count > 0)
             {
                 ClearField(enemies);
                 return false;
@@ -1278,6 +1294,7 @@ namespace SeaFight
             ClearField(enemies);
 
             ships = new List<int> { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+
             currentShipIndex = 0;
 
             shipsInstalled = false;
@@ -1287,6 +1304,44 @@ namespace SeaFight
             activeCell = new Point();
 
             lights = BackColor;
+
+            myShips.Clear();
+            itsShips.Clear();
+        }
+
+
+        public override string ToString()
+        {
+            string str = string.Empty;
+
+            str += ShipsToStr(myShips);
+
+            str += ShipsToStr(itsShips);
+
+            return str;
+        }
+
+
+        string ShipsToStr(List<Ship> ships)
+        {
+            string str = string.Empty;
+
+            for (int i = 1; i <= nWidth; i++)
+            {
+                for (int j = 1; j <= nHeight; j++)
+                {
+                    if (ships.Find(x => x.Coords.FirstOrDefault(c => c.X == i && c.Y == j) != new Point()) != null)
+                        str += "#";
+                    else
+                        str += "*";
+                }
+
+                str += "\n";
+            }
+
+            str += "\n";
+
+            return str;
         }
     }
 }
