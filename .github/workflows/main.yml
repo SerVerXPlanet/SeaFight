@@ -26,12 +26,6 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
-      - name: get dll
-        env:
-          TOKEN: ${{ secrets.repo_token }}
-        run: |
-          curl -H "Authorization: token ${TOKEN}" https://github.com/SerVerXPlanet/SeaFight/releases/download/v.main/SeaFight.dll
         
       # Runs a single command using the runners shell
       - name: Build app for release
