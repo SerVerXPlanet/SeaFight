@@ -1,12 +1,11 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: build
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -23,25 +22,18 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v2
         
       # Runs a single command using the runners shell
-      - name: Build and Publish Web App
+      - name: Build app for release
         run: msbuild SeaFight.sln /p:platform="Any CPU" /p:Configuration=Release
-        
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      - uses: pipe-cd/actions-gh-release@v2.3.4
         with:
-          tag_name: v${{ github.ref }}
-          release_name: Latest Release
-          body: |
-            Changes in this Release
-            - Some Changes
-          draft: false
-          prerelease: false
+          release_file: '**/SeaFight.dll'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
