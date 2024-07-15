@@ -36,5 +36,5 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: SeaFight/bin/Release/SeaFight.dll
-          asset_name: Latest Release
-          tag: v${{ github.ref }}
+          asset_name: SeaFight.dll
+          tag: Latest Release
