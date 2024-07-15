@@ -801,6 +801,23 @@ namespace SeaFight
         }
 
 
+        public void OpenLiveShips()
+        {
+            for (int i = 1; i <= nWidth; i++)
+            {
+                for (int j = 1; j <= nHeight; j++)
+                {
+                    if (cells[i, j] == Status.Empty && enemies[i, j] == Status.Ship)
+                    {
+                        cells[i, j] = Status.Ghost;
+                    }
+                }
+            }
+
+            Invalidate();
+        }
+
+
         public bool IsShipDestroyed(Point currentCell, bool shipsOnly = false)
         {
             bool fullShip = true;
@@ -1307,6 +1324,8 @@ namespace SeaFight
 
             myShips.Clear();
             itsShips.Clear();
+
+            mode = Mode.View;
         }
 
 
